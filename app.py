@@ -9,8 +9,10 @@ from flask_session import Session
 
 app = Flask(__name__, static_url_path='/')
 app.config.from_object(app_config)
-app_config.SESSION_SQLALCHEMY.init_app(app)
-app_config.SESSION_SQLALCHEMY.create_all()
+if app_config.SESSION_SQLALCHEMY is not None:
+    app_config.SESSION_SQLALCHEMY.init_app(app)
+    with app.app_context():
+        app_config.SESSION_SQLALCHEMY.create_all()
 Session(app)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 

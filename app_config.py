@@ -8,6 +8,8 @@ AUTHORITY = 'https://login.microsoftonline.com/%s' % os.getenv('BINJHUB_TENANT_I
 SESSION_TYPE = 'filesystem'
 SCOPE = []
 
+SESSION_SQLALCHEMY = None
+
 if os.getenv('POSTGRESQL'):
     SESSION_TYPE = 'sqlalchemy'
     SQLALCHEMY_DATABASE_URI = os.getenv('POSTGRESQL')
