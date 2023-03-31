@@ -4,6 +4,7 @@ import identity
 import identity.web
 from flask import Flask, redirect, request, send_file, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
+
 import app_config
 from flask_session import Session
 
@@ -11,8 +12,6 @@ app = Flask(__name__, static_url_path='/')
 app.config.from_object(app_config)
 if app_config.SESSION_SQLALCHEMY is not None:
     app_config.SESSION_SQLALCHEMY.init_app(app)
-    with app.app_context():
-        app_config.SESSION_SQLALCHEMY.create_all()
 Session(app)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -48,3 +47,8 @@ def auth_status():
 def auth_callback():
     res = auth.complete_log_in(request.args)
     return redirect('/api/auth/status')
+
+
+if app_config.SESSION_SQLALCHEMY is not None:
+    with app.app_context():
+        app_config.SESSION_SQLALCHEMY.create_all()
