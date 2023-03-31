@@ -1,0 +1,294 @@
+openapi: 3.1.0
+info:
+  title: BINJ Hub
+  description: The BINJ Hub API that provides authorization and music voting.
+  version: 1.0.0
+servers:
+  - url: "/api"
+paths:
+  /auth:
+    summary: Redirects to Microsoft OAuth.
+    get:
+      operationId: AuthRedirect
+      responses:
+        3XX:
+          description: Redirects to Microsoft OAuth.
+          headers:
+            Location:
+              description: Redirect URL of Microsoft OAuth.
+              schema:
+                type: string
+  /auth/status:
+    summary: The auth status of the user.
+    get:
+      operationId: AuthStatus
+      description: Requests the user auth status and profile.
+      responses:
+        default:
+          description: Returns the auth status and profile.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isLoggedIn:
+                    type: boolean
+                  profile:
+                    $ref: "#/components/schemas/Profile"
+  /auth/callback:
+    summary: Callback URL for Microsoft OAuth.
+    get:
+      operationId: AuthCallback
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        3XX:
+          description: Redirects to the homepage.
+          headers:
+            Location:
+              description: Redirection URL.
+              schema:
+                type: string
+  /recommendations:
+    summary: Song recommendations.
+    get:
+      operationId: GetSongRecommendations
+      description: List song recommendations.
+      parameters:
+        - name: skip
+          schema:
+            type: integer
+          in: query
+          description: The number of entries to skip.
+        - name: top
+          schema:
+            type: integer
+          in: query
+          description: The maximum number of entries to return.
+      responses:
+        default:
+          description: The list of song recommendations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recommendation"
+    put:
+      operationId: PutSongRecommendations
+      description: Create a song recommendation.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Recommendation"
+      responses:
+        default:
+          description: The created song recommendation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Recommendation"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+  /recommendations/{id}:
+    summary: A song recommendation.
+    parameters:
+      - $ref: "#/components/parameters/RecommendationIdPath"
+    get:
+      operationId: GetSongRecommendationId
+      description: Gets a song recommendation by ID.
+      responses:
+        default:
+          description: The song recommendation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Recommendation"
+    patch:
+      operationId: PatchSongRecommendationId
+      description: Updates a song recommendation by ID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        default:
+          description: The updated song recommendation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Recommendation"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: DeleteSongRecommendationId
+      description: Deletes a song recommendation by ID.
+      responses:
+        default:
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        401:
+          $ref: "#/components/responses/Unauthorized"
+  /recommendations/{id}/votes:
+    summary: Votes for a song recommendation.
+    parameters:
+      - $ref: "#/components/parameters/RecommendationIdPath"
+    get:
+      operationId: GetRecommendationVote
+      responses:
+        default:
+          description: The votes for a song recommendation.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Vote"
+    put:
+      operationId: PutRecommendationVote
+      description: Create a recommendation vote.
+      responses:
+        default:
+          description: The created vote.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Vote"
+components:
+  schemas:
+    Recommendation:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+        reason:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [title, url, reason]
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+      required: [name, email]
+    Profile:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        voteTimesLeft:
+          type: integer
+      required: [name, email, voteTimesLeft]
+    Vote:
+      type: object
+      properties:
+        id:
+          type: string
+        recommendationId:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [id, recommendationId]
+  responses:
+    Unauthorized:
+      description: User is not authorized.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                const: false
+              message:
+                type: string
+              data:
+                type: "null"
+  parameters:
+    RecommendationIdPath:
+      name: id
+      in: path
+      description: ID of the recommendation.
+      schema:
+        type: string
+      required: true
+  securitySchemes:
+    cookie:
+      type: apiKey
+      name: session
+      in: cookie
+      description: The session cookie.
+security:
+  - cookie: []
