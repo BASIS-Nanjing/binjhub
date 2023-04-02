@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: BINJ Hub
   description: The BINJ Hub API that provides authorization and music voting.
-  version: 1.1.0
+  version: 1.1.1
 servers:
   - url: "/api"
 paths:
@@ -47,6 +47,28 @@ paths:
       responses:
         3XX:
           description: Redirects to the return URL.
+          headers:
+            Location:
+              description: Redirection URL.
+              schema:
+                type: string
+  /auth/logout:
+    summary: Log out the user.
+    get:
+      operationId: AuthLogout
+      parameters:
+        - name: returnUrl
+          in: query
+          schema:
+            type: string
+        - name: upstream
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        3XX:
+          description: Logs out the user and redirects to OAuth logout URL or returnUrl.
           headers:
             Location:
               description: Redirection URL.

@@ -1,6 +1,6 @@
 import os
 
-API_VERSION = '1.1.0'
+API_VERSION = '1.1.1'
 
 CLIENT_ID = os.getenv('BINJHUB_CLIENT_ID')
 CLIENT_SECRET = os.getenv('BINJHUB_CLIENT_SECRET')

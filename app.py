@@ -66,6 +66,17 @@ def auth_callback():
     return redirect(url_for('home'))
 
 
+@app.route('/api/auth/logout')
+def auth_logout():
+    url = request.args.get('returnUrl') or url_for('home', _external=True)
+    logout = request.args.get('upstream', '1')
+    logout = logout not in ['false', '0']
+    res = auth.log_out(url)
+    if logout:
+        return redirect(res)
+    return redirect(url)
+
+
 @app.route('/api/me')
 def me():
     user = auth.get_user()
