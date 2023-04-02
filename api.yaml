@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: BINJ Hub
   description: The BINJ Hub API that provides authorization and music voting.
-  version: 1.1.2
+  version: 1.1.3
 servers:
   - url: "/api"
 paths:
@@ -111,6 +111,11 @@ paths:
             type: integer
           in: query
           description: The maximum number of entries to return.
+        - name: orderBy
+          schema:
+            enum: [modified, created, id]
+          in: query
+          description: The sort order of the returned recommendations.
       responses:
         default:
           description: The list of song recommendations.
@@ -245,6 +250,8 @@ components:
           type: string
         reason:
           type: string
+        flag:
+          type: integer
         votes:
           $ref: "#/components/schemas/Votes"
         myVotes:
@@ -276,6 +283,8 @@ components:
           type: string
         email:
           type: string
+        flag:
+          type: integer
   responses:
     Unauthorized:
       description: User is not authorized.
