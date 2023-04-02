@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: BINJ Hub
   description: The BINJ Hub API that provides authorization and music voting.
-  version: 1.1.1
+  version: 1.1.2
 servers:
   - url: "/api"
 paths:
@@ -238,26 +238,31 @@ components:
       type: object
       properties:
         id:
-          type: string
+          type: integer
         title:
           type: string
         url:
           type: string
         reason:
           type: string
-        voteUp:
-          type: integer
-        voteDown:
-          type: integer
-        myVoteUp:
-          type: boolean
-        myVoteDown:
-          type: boolean
+        votes:
+          $ref: "#/components/schemas/Votes"
+        myVotes:
+          $ref: "#/components/schemas/Votes"
         user:
           $ref: "#/components/schemas/User"
+    Votes:
+      type: object
+      properties:
+        up:
+          type: integer
+        down:
+          type: integer
     RecommendationNew:
       type: object
       properties:
+        id:
+          type: integer
         title:
           type: string
         url:
@@ -290,7 +295,7 @@ components:
       in: path
       description: ID of the recommendation.
       schema:
-        type: string
+        type: integer
       required: true
   securitySchemes:
     cookie:
