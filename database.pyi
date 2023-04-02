@@ -47,6 +47,7 @@ class Recommendation:
     title: str
     url: str
     reason: str
+    flag: int
     created: int
     modified: int
 
@@ -60,3 +61,4 @@ class Vote:
 class User:
     email: str
     name: str
+    flag: int

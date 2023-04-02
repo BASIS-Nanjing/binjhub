@@ -155,7 +155,7 @@ class Database:
             return False
         db.commit()
         return True
-    
+
     def delete_recommendation(self, id):
         sql = 'DELETE FROM recommendations WHERE id=?'
         db = self._database
@@ -180,14 +180,15 @@ class Database:
 
 
 class Recommendation:
-    __slots__ = 'id', 'email', 'title', 'url', 'reason', 'created', 'modified'
+    __slots__ = 'id', 'email', 'title', 'url', 'reason', 'flag', 'created', 'modified'
 
-    def __init__(self, id, email, title, url, reason, created, modified):
+    def __init__(self, id, email, title, url, reason, flag, created, modified):
         self.id = id
         self.email = email
         self.title = title
         self.url = url
         self.reason = reason
+        self.flag = flag
         self.created = created
         self.modified = modified
 
@@ -204,8 +205,9 @@ class Vote:
 
 
 class User:
-    __slots__ = 'email', 'name'
+    __slots__ = 'email', 'name', 'flag'
 
-    def __init__(self, email, name):
+    def __init__(self, email, name, flag):
         self.email = email
         self.name = name
+        self.flag = flag
