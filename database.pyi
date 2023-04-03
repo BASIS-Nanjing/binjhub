@@ -12,6 +12,7 @@ class _Cursor(Protocol):
 RF_PENDING: int
 RF_PLAYED: int
 RF_DISAPPROVED: int
+RF_ALL: int
 
 UF_ADMIN: int
 UF_SUSPENDED: int
