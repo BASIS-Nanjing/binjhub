@@ -1,7 +1,7 @@
 import time
 from threading import get_ident
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 CREATE_USERS = '''CREATE TABLE IF NOT EXISTS users (
     email TEXT PRIMARY KEY,
@@ -26,6 +26,15 @@ CREATE_VOTES = '''CREATE TABLE IF NOT EXISTS votes (
     down INTEGER
 );'''
 
+# Recommendation flags
+RF_PENDING = 1 << 0
+RF_PLAYED = 1 << 1
+RF_DISAPPROVED = 1 << 2
+
+# User flags
+UF_ADMIN = 1 << 0
+UF_SUSPENDED = 1 << 1
+
 
 class Database:
     def __init__(self, connect) -> None:
@@ -49,12 +58,17 @@ class Database:
     def _execute(self, sql, parameters=[]):
         return self._database.cursor().execute(sql, parameters)
 
-    def get_recommendations_by_user(self, email, skip=0, top=-1, order_by='modified'):
+    def get_recommendations_by_user(
+        self, email, skip=0, top=-1, order_by='modified', flag=None
+    ):
         if order_by not in ['modified', 'created', 'id']:
             raise ValueError('Cannot sort by %r' % order_by)
+        where = ''
+        if flag is not None:
+            where = ' AND (flag | %d) = %d' % (flag, flag)
         sql = (
-            'SELECT * FROM recommendations WHERE email=?'
-            ' ORDER BY %s DESC LIMIT %d OFFSET %d' % (order_by, top, skip)
+            'SELECT * FROM recommendations WHERE email=?%s'
+            ' ORDER BY %s DESC LIMIT %d OFFSET %d' % (where, order_by, top, skip)
         )
         res = self._execute(sql, [email]).fetchall()
         return [Recommendation(*x) for x in res]
@@ -100,13 +114,15 @@ class Database:
         if res:
             return User(*res)
 
-    def list_recommendations(self, skip=0, top=-1, order_by='modified'):
+    def list_recommendations(self, skip=0, top=-1, order_by='modified', flag=None):
         if order_by not in ['modified', 'created', 'id']:
             raise ValueError('Cannot sort by %r' % order_by)
-        sql = 'SELECT * FROM recommendations ORDER BY %s DESC LIMIT %d OFFSET %d' % (
-            order_by,
-            top,
-            skip,
+        where = ''
+        if flag is not None:
+            where = ' WHERE (flag | %d) = %d' % (flag, flag)
+        sql = (
+            'SELECT * FROM recommendations%s ORDER BY %s'
+            ' DESC LIMIT %d OFFSET %d' % (where, order_by, top, skip)
         )
         res = self._execute(sql).fetchall()
         return [Recommendation(*x) for x in res]
@@ -145,12 +161,34 @@ class Database:
         cur.execute(sql, params)
         db.commit()
 
-    def patch_recommendation(self, id, *, reason):
-        sql = 'UPDATE recommendations SET reason=? WHERE id=?'
+    def patch_recommendation(self, id, *, reason=None, flag=None):
+        fields = []
+        data = []
+        if reason is not None:
+            fields.append('reason=?')
+            data.append(reason)
+        if flag is not None:
+            fields.append('flag=?')
+            data.append(flag)
+        if not fields:
+            raise ValueError('Must PATCH at least one field')
+        value = ', '.join(fields)
+        sql = 'UPDATE recommendations SET %s WHERE id=?' % value
         db = self._database
         cur = db.cursor()
         try:
-            cur.execute(sql, [reason, id])
+            cur.execute(sql, data + [id])
+        except:
+            return False
+        db.commit()
+        return True
+
+    def patch_user(self, id, *, flag):
+        sql = 'UPDATE users SET flag=? WHERE id=?'
+        db = self._database
+        cur = db.cursor()
+        try:
+            cur.execute(sql, [flag, id])
         except:
             return False
         db.commit()
