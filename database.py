@@ -1,7 +1,7 @@
 import time
 from threading import get_ident
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 CREATE_USERS = '''CREATE TABLE IF NOT EXISTS users (
     email TEXT PRIMARY KEY,
@@ -139,15 +139,15 @@ class Database:
         db.commit()
         return True
 
-    def add_recommendation(self, email, title, url, reason):
+    def add_recommendation(self, email, title, url, reason, flag=0):
         sql = (
-            'INSERT INTO recommendations(email, title, url, reason, modified, created)'
-            ' VALUES(?, ?, ?, ?, ?, ?)'
+            'INSERT INTO recommendations(email, title, url, reason, modified,'
+            ' created, flag) VALUES(?, ?, ?, ?, ?, ?, ?)'
         )
         ctime = int(time.time() * 1000)
         db = self._database
         cur = db.cursor()
-        cur.execute(sql, [email, title, url, reason, ctime, ctime])
+        cur.execute(sql, [email, title, url, reason, ctime, ctime, flag])
         db.commit()
 
     def update_vote(self, email, recommendation_id, up, down):
