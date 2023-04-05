@@ -1,7 +1,7 @@
 import time
 from threading import get_ident
 
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 CREATE_USERS = '''CREATE TABLE IF NOT EXISTS users (
     email TEXT PRIMARY KEY,
@@ -115,17 +115,24 @@ class Database:
         if res:
             return User(*res)
 
-    def list_recommendations(self, skip=0, top=-1, order_by='modified', flag=None):
+    def list_recommendations(
+        self, skip=0, top=-1, order_by='modified', flag=None, extra_email=None
+    ):
         if order_by not in ['modified', 'created', 'id']:
             raise ValueError('Cannot sort by %r' % order_by)
-        where = ''
+        wheres = []
+        params = []
         if flag is not None:
-            where = ' WHERE (flag | %d) = %d' % (flag, flag)
+            wheres.append('(flag|%d)=%d' % (flag, flag))
+        if extra_email is not None:
+            wheres.append('email=?')
+            params.append(extra_email)
+        where = (' WHERE ' + ' OR '.join(wheres)) if wheres else ''
         sql = (
             'SELECT * FROM recommendations%s ORDER BY %s'
             ' DESC LIMIT %d OFFSET %d' % (where, order_by, top, skip)
         )
-        res = self._execute(sql).fetchall()
+        res = self._execute(sql, params).fetchall()
         return [Recommendation(*x) for x in res]
 
     def user_can_recommend(self, email):
