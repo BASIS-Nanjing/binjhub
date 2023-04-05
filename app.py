@@ -58,7 +58,7 @@ def _unauthorized():
 
 @app.route('/')
 def home():
-    return render_template('index.html', user=auth.get_user())
+    return render_template('index.html')
 
 
 @app.route('/api/auth')

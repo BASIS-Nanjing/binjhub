@@ -1,7 +1,4 @@
-<!--
-    This is a basic page that does nothing but tell the user to
-    authenticate if they haven't.
--->
+<!DOCTYPE html>
 
 <html lang="en">
 
@@ -9,16 +6,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BINJ Hub Demo</title>
+    <script src="/scripts/index.js"></script>
+    <script>
+        BINJHub.getUser().then(json => {
+            const br = document.createElement("br");
+            if (!json.success) {
+                const a = document.createElement("a");
+                a.innerText = "Click to log in!";
+                a.href = "/api/auth";
+                userstat.innerHTML = "";
+                userstat.append(json.message, br, a);
+            } else {
+                const b = document.createElement("b");
+                b.innerText = json.data.name;
+                const i = document.createElement("i");
+                i.innerText = json.data.email;
+                const a = document.createElement("a");
+                a.innerText = "Click to log out!";
+                a.href = "/api/auth/logout?upstream=1";
+                userstat.innerHTML = "";
+                userstat.append("Logged in as ", b, " (", i, ")!", br, a);
+            }
+        }).catch(err => {
+            userstat.textContent = "ERROR: " + err;
+        });
+    </script>
 </head>
 
 <body>
     <h1>Welcome to BINJ Hub</h1>
-    {% if user == None %}
-    <p>You are not logged in.</p>
-    <p><a href="/api/auth">Click here</a> to log in!</p>
-    {% else %}
-    <p>Welcome back, <b>{{ user["name"] }}</b> <i>({{ user["email"] }})</i>!</p>
-    {% endif %}
+    <div id="userstat">Loading, please wait...</div>
 </body>
 
 </html>
