@@ -35,7 +35,8 @@ auth = identity.web.Auth(
     client_credential=app.config['CLIENT_SECRET'],
 )
 
-database = Database(connect)
+with app.app_context():
+    database = Database(connect)
 
 
 def _user():
