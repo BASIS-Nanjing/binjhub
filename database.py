@@ -1,7 +1,7 @@
 import time
 from threading import get_ident
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 
 CREATE_USERS = '''CREATE TABLE IF NOT EXISTS users (
     email TEXT PRIMARY KEY,
@@ -127,6 +127,12 @@ class Database:
         )
         res = self._execute(sql).fetchall()
         return [Recommendation(*x) for x in res]
+
+    def user_can_recommend(self, email):
+        return True
+
+    def user_can_vote(self, email):
+        return True
 
     def add_user(self, email, name):
         sql = 'INSERT INTO users(email, name) VALUES(?, ?)'
