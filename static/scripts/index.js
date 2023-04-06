@@ -1,5 +1,5 @@
 (function () {
-    const baseurl = window.location.href.replace(/\/$/, "") + "/api";
+    const baseurl = window.location.pathname.replace(/\/$/, "") + "/api";
     async function fetchAPI(path, method = "GET", data) {
         url = baseurl + path;
         body = data && JSON.stringify(data);
