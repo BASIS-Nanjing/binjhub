@@ -141,12 +141,12 @@ class Database:
     def user_can_vote(self, email):
         return True
 
-    def add_user(self, email, name):
-        sql = 'INSERT INTO users(email, name) VALUES(?, ?)'
+    def add_user(self, email, name, flag=0):
+        sql = 'INSERT INTO users(email, name, flag) VALUES(?, ?, ?)'
         db = self._database
         cur = db.cursor()
         try:
-            cur.execute(sql, [email, name])
+            cur.execute(sql, [email, name, flag])
         except:
             return False
         db.commit()
