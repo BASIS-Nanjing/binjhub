@@ -15,7 +15,7 @@ from flask import (
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import app_config
-from database import RF_ALL, UF_ADMIN, Database
+from database import RF_ALL, RF_PENDING, UF_ADMIN, Database
 from flask_session import Session
 
 app = Flask(__name__, static_url_path='/')
@@ -41,20 +41,25 @@ with app.app_context():
 
 def _user():
     user = auth.get_user()
-    assert user, 'User not logged in'
-    return database.get_user_by_email(user['email'])
+    if user is not None:
+        return database.get_user_by_email(user['email'])
 
 
 def _dump_user(user=None):
     if user is None:
         user = _user()
+        assert user, 'User is not logged in'
     return {'name': user.name, 'email': user.email, 'flag': user.flag}
 
 
+def _json(message, code=200):
+    resp = make_response(json.dumps({'success': code < 400, 'message': message}), code)
+    resp.content_type = 'application/json'
+    return resp
+
+
 def _unauthorized():
-    return make_response(
-        json.dumps({'success': False, 'message': 'User is not logged in'}), 401
-    )
+    return _json('User is not logged in', 401)
 
 
 @app.route('/')
@@ -79,8 +84,14 @@ def auth_callback():
     res = auth.complete_log_in(request.args)
     assert res
     if 'error' in res:
-        session['auth_error'] = res
-    if 'return_url' in session and session['return_url']:
+        msg = 'Auth error %s' % res['error']
+        if 'error_description' in res:
+            msg += ': %s' % res['error_description']
+        session['auth_error'] = msg
+    user = _user()
+    if user is None and 'error' not in res:
+        database.add_user(res['email'], res['name'])
+    if session.get('return_url'):
         url = session.pop('return_url')
         return redirect(url)
     return redirect(url_for('home'))
@@ -97,24 +108,14 @@ def auth_logout():
     return redirect(url)
 
 
-def _error(message, code=400):
-    return make_response(json.dumps({'success': False, 'message': message}), code)
-
-
 @app.route('/api/me')
 def me():
-    user = auth.get_user()
+    if 'auth_error' in session:
+        return _json(session.pop('auth_error'), 500)
+    user = _user()
     if user is None:
         return _unauthorized()
-    if 'name' not in user:
-        return _error('User name not found', 401)
-    if 'email' not in user:
-        return _error('User email not found', 401)
-    data = {
-        'success': True,
-        'message': '',
-        'data': {'name': user['name'], 'email': user['email']},
-    }
+    data = {'success': True, 'message': '', 'data': _dump_user(user)}
     return json.dumps(data)
 
 
@@ -126,19 +127,25 @@ def api_get_recommendations():
         order_by = request.args.get('orderBy', 'modified')
         assert order_by in ['modified', 'created', 'id']
     except:
-        return _error('Invalid parameters')
+        return _json('Invalid parameters', 400)
+    flag = 0
     user = _user()
-    uid = user.email
-    uf = user.flag
-    flag = RF_ALL if uf & UF_ADMIN else 0
+    uid = None
+    if user is not None:
+        uid = user.email
+        uf = user.flag
+        flag = RF_ALL if uf & UF_ADMIN else 0
     results = database.list_recommendations(
-        skip=skip, top=top, order_by=order_by, flag=flag
+        skip=skip, top=top, order_by=order_by, flag=flag, extra_email=uid
     )
     data = []
     for res in results:
         up, down = database.get_vote_counts_by_recommendation(res.id)
-        uv = database.get_user_vote(uid, res.id)
-        uup, udown = (uv.up, uv.down) if uv is not None else (0, 0)
+        if user is not None:
+            uv = database.get_user_vote(uid, res.id)
+            uup, udown = (uv.up, uv.down) if uv is not None else (0, 0)
+        else:
+            uup, udown = 0, 0
         data.append(
             {
                 'id': res.id,
