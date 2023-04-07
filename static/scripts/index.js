@@ -3,7 +3,8 @@
     async function fetchAPI(path, method = "GET", data) {
         url = baseurl + path;
         body = data && JSON.stringify(data);
-        ret = await fetch(url, { body, method });
+        headers = data && { "Content-Type": "application/json" };
+        ret = await fetch(url, { body, method, headers });
         return await ret.json();
     }
     window.BINJHub = window.BINJHub || {};
